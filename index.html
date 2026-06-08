@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Word Ladder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      text-align: center;
+    }
+
+    input {
+      padding: 8px;
+      margin: 5px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 8px 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #output {
+      margin-top: 20px;
+      font-size: 18px;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Word Ladder</h1>
+
+  <input id="start" placeholder="start word">
+  <input id="end" placeholder="end word">
+  <button onclick="run()">Solve</button>
+
+  <div id="output"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
