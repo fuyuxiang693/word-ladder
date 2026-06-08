@@ -2,66 +2,33 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Word Ladder Daily</title>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      text-align: center;
-    }
-
-    h1 {
-      margin-bottom: 20px;
-    }
-
-    .puzzle-box {
-      margin: 20px 0;
-      padding: 15px;
-      border: 2px solid #ddd;
-      border-radius: 10px;
-      font-size: 18px;
-    }
-
-    .word {
-      font-size: 28px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-
-    button {
-      padding: 10px 15px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    #output {
-      margin-top: 20px;
-      white-space: pre-line;
-      font-size: 18px;
-    }
-  </style>
+  <title>Word Ladder</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-  <h1>Word Ladder Daily</h1>
+<div id="app">
 
-  <div class="puzzle-box">
-    <div>Start Word</div>
-    <div class="word" id="startWord">...</div>
-
-    <div>End Word</div>
-    <div class="word" id="endWord">...</div>
+  <h2>WORD LADDER</h2>
+  <div id="description">
+    Change the <b>start word</b> into the <b>end word</b> one letter at a time.<br>
+    Each step must be a valid word.<br>
+    You can add, remove, or change <b>one letter per move</b>.
   </div>
 
-  <button onclick="solve()">Show Solution</button>
+  <div id="ladder"></div>
 
-  <div id="output"></div>
+  <div id="actions">
+    <span onclick="undo()" id="undoBtn">UNDO</span>
+    <span onclick="showSolution()" id="solveBtn">SHOW SOLUTION</span>
+  </div>
 
-  <script src="script.js"></script>
+  <div id="keyboard"></div>
+
+</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>
