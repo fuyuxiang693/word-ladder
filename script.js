@@ -1,18 +1,20 @@
 let WORDS = [];
-let PUZZLE = null;
+let WORDSET = new Set();
 
+let PUZZLE = null;
 let path = [];
 let guess = "";
-let solutionPath = null;
 
+let solutionPath = null;
 let gameWon = false;
 let solutionShown = false;
 
 // --------------------
 // CONSTRAINTS
 // --------------------
-const MIN_LEN = 5;
-const MIN_PATH = 5;
+const MIN_LEN = 4;
+const MAX_LEN = 6;
+const MIN_PATH = 6;
 const MAX_PATH = 10;
 
 // --------------------
@@ -22,7 +24,10 @@ async function loadWords() {
   const res = await fetch("en_filtered.txt");
   WORDS = (await res.text())
     .split("\n")
-    .map(w => w.trim().toLowerCase());
+    .map(w => w.trim().toLowerCase())
+    .filter(Boolean);
+
+  WORDSET = new Set(WORDS);
 }
 
 // --------------------
@@ -57,7 +62,7 @@ function isOneEditAway(a, b) {
 }
 
 // --------------------
-// CACHE NEIGHBORS
+// NEIGHBORS (cached)
 // --------------------
 const neighborCache = new Map();
 
@@ -76,22 +81,98 @@ function getNeighbors(word) {
 }
 
 // --------------------
-// BFS
+// RNG mulberry32 (fixed seed for daily puzzle)
+// --------------------
+function random_number_generator(seed) {
+  return function () {
+    let t = (seed += 0x6D2B79F5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function isValidStartEnd(start, end) {
+  if (!start || !end) return false;
+
+  for (let i = 0; i < start.length; i++) {
+    if (start[i] === end[i]) return false;
+  }
+
+  return true;
+}
+
+// --------------------
+// PUZZLE GENERATION (FIXED)
+// --------------------
+function getPuzzle() {
+  const seed = Math.floor(Date.now() / 86400000);
+  const rng = random_number_generator(seed);
+
+  const targetLen =
+    Math.floor(rng() * (MAX_PATH - MIN_PATH + 1)) + MIN_PATH;
+
+  for (let i = 0; i < 500; i++) {
+
+    const startIndex = Math.floor(rng() * WORDS.length);
+    const start = WORDS[(startIndex + i) % WORDS.length];
+
+    if (!start || start.length < MIN_LEN || start.length > MAX_LEN) continue;
+
+    const queue = [[start]];
+    const visited = new Set([start]);
+
+    while (queue.length) {
+      const p = queue.shift();
+      const node = p[p.length - 1];
+
+      for (const next of getNeighbors(node)) {
+
+        if (visited.has(next)) continue;
+        visited.add(next);
+
+        const newPath = [...p, next];
+
+        if (newPath.length > targetLen) continue;
+
+        queue.push(newPath);
+
+        if (
+          newPath.length === targetLen &&
+          isValidStartEnd(start, next)
+        ) {
+          return {
+            start,
+            end: next
+          };
+        }
+      }
+    }
+  }
+
+  return {
+    start: WORDS[0],
+    end: WORDS[1]
+  };
+}
+
+// --------------------
+// FIND PATH (RELIABLE SOLUTION PATH)
 // --------------------
 function findPath(start, end) {
   const queue = [[start]];
   const visited = new Set([start]);
 
   while (queue.length) {
-    const path = queue.shift();
-    const node = path[path.length - 1];
+    const p = queue.shift();
+    const node = p[p.length - 1];
 
-    if (node === end) return path;
+    if (node === end) return p;
 
     for (const n of getNeighbors(node)) {
       if (!visited.has(n)) {
         visited.add(n);
-        queue.push([...path, n]);
+        queue.push([...p, n]);
       }
     }
   }
@@ -100,62 +181,7 @@ function findPath(start, end) {
 }
 
 // --------------------
-// PUZZLE
-// --------------------
-function getPuzzle() {
-  const seed = Math.floor(Date.now() / 86400000);
-
-  for (let i = 0; i < 500; i++) {
-    const start = WORDS[(seed + i) % WORDS.length];
-    const end = WORDS[(seed * 17 + i) % WORDS.length];
-
-    if (start.length < MIN_LEN || end.length < MIN_LEN) continue;
-
-    const p = findPath(start, end);
-
-    if (!p) continue;
-    if (p.length < MIN_PATH || p.length > MAX_PATH) continue;
-
-    return { start, end };
-  }
-
-  return { start: WORDS[0], end: WORDS[1] };
-}
-
-// --------------------
-// VALID MOVE
-// --------------------
-function isValidMove(from, to) {
-  return WORDS.includes(to) && isOneEditAway(from, to);
-}
-
-// --------------------
-// RENDER ROW
-// --------------------
-function makeRow(word, isEnd = false) {
-  const row = document.createElement("div");
-  row.className = "row";
-
-  for (let i = 0; i < word.length; i++) {
-    const t = document.createElement("div");
-    t.className = "tile";
-
-    t.innerText = word[i].toUpperCase();
-
-    if (isEnd) {
-      t.classList.add("green");
-    } else {
-      t.classList.add(word[i] === PUZZLE.end[i] ? "green" : "grey");
-    }
-
-    row.appendChild(t);
-  }
-
-  return row;
-}
-
-// --------------------
-// MAIN RENDER
+// RENDER
 // --------------------
 function renderLadder() {
   const ladder = document.getElementById("ladder");
@@ -168,13 +194,27 @@ function renderLadder() {
   }
 
   ladder.appendChild(makeInputRow());
-
   ladder.appendChild(makeRow(PUZZLE.end, true));
 }
 
-// --------------------
-// INPUT ROW
-// --------------------
+function makeRow(word, isEnd = false) {
+  const row = document.createElement("div");
+  row.className = "row";
+
+  for (let i = 0; i < word.length; i++) {
+    const t = document.createElement("div");
+    t.className = "tile";
+    t.innerText = word[i].toUpperCase();
+
+    if (isEnd) t.classList.add("green");
+    else t.classList.add(word[i] === PUZZLE.end[i] ? "green" : "grey");
+
+    row.appendChild(t);
+  }
+
+  return row;
+}
+
 function makeInputRow() {
   const row = document.createElement("div");
   row.className = "row";
@@ -190,31 +230,26 @@ function makeInputRow() {
 }
 
 // --------------------
-// KEYBOARD (UPDATED)
+// KEYBOARD (unchanged)
 // --------------------
 function createKeyboard() {
-  const layout = [
-    "qwertyuiop",
-    "asdfghjkl",
-    "zxcvbnm"
-  ];
-
+  const layout = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
   const kb = document.getElementById("keyboard");
   kb.innerHTML = "";
 
-  function makeKey(label, onClick) {
-    const key = document.createElement("div");
-    key.className = "key";
-    key.innerText = label;
-    key.onclick = onClick;
-    return key;
+  function key(label, fn) {
+    const k = document.createElement("div");
+    k.className = "key";
+    k.innerText = label;
+    k.onclick = fn;
+    return k;
   }
 
   const row1 = document.createElement("div");
   row1.className = "keyrow";
 
   for (const ch of layout[0]) {
-    row1.appendChild(makeKey(ch.toUpperCase(), () => {
+    row1.appendChild(key(ch.toUpperCase(), () => {
       if (!gameWon && !solutionShown) {
         guess += ch;
         renderLadder();
@@ -226,7 +261,7 @@ function createKeyboard() {
   row2.className = "keyrow";
 
   for (const ch of layout[1]) {
-    row2.appendChild(makeKey(ch.toUpperCase(), () => {
+    row2.appendChild(key(ch.toUpperCase(), () => {
       if (!gameWon && !solutionShown) {
         guess += ch;
         renderLadder();
@@ -237,23 +272,18 @@ function createKeyboard() {
   const row3 = document.createElement("div");
   row3.className = "keyrow";
 
-  const enter = makeKey("ENTER", () => {
-    if (!gameWon && !solutionShown) submit();
-  });
-  enter.classList.add("special-key", "enter-key");
-
-  const back = makeKey("⌫", () => {
+  const enter = key("ENTER", submit);
+  const back = key("⌫", () => {
     if (!gameWon && !solutionShown) {
       guess = guess.slice(0, -1);
       renderLadder();
     }
   });
-  back.classList.add("special-key", "back-key");
 
   row3.appendChild(enter);
 
   for (const ch of layout[2]) {
-    row3.appendChild(makeKey(ch.toUpperCase(), () => {
+    row3.appendChild(key(ch.toUpperCase(), () => {
       if (!gameWon && !solutionShown) {
         guess += ch;
         renderLadder();
@@ -285,77 +315,50 @@ document.addEventListener("keydown", (e) => {
 // SUBMIT
 // --------------------
 function submit() {
-  if (gameWon || solutionShown) return;
-
   const last = path.length ? path[path.length - 1] : PUZZLE.start;
   const word = guess.trim().toLowerCase();
 
-  if (!isValidMove(last, word)) {
-    renderLadder();
-    requestAnimationFrame(() => wiggleInputRow());
+  if (!WORDSET.has(word) || !isOneEditAway(last, word)) {
+    wiggle();
     return;
   }
 
   path.push(word);
   guess = "";
 
-  checkWin(word);
+  if (isOneEditAway(word, PUZZLE.end) || word === PUZZLE.end) {
+    gameWon = true;
+    setTimeout(() => alert("YOU WIN 🎉"), 100);
+  }
+
   renderLadder();
 }
 
 // --------------------
-// WIN
+// SHOW SOLUTION (FIXED)
 // --------------------
-function checkWin(word) {
-  if (word === PUZZLE.end || isOneEditAway(word, PUZZLE.end)) {
-    gameWon = true;
-    setTimeout(() => alert("YOU WIN 🎉"), 100);
-  }
+function showSolution() {
+  if (!solutionPath && !PUZZLE.directPath) return;
+
+  solutionShown = true;
+
+  path = (solutionPath || PUZZLE.directPath).slice(1, -1);
+  guess = "";
+
+  renderLadder();
 }
 
 // --------------------
 // WIGGLE
 // --------------------
-function wiggleInputRow() {
-  const ladder = document.getElementById("ladder");
-  const rows = ladder.getElementsByClassName("row");
-
+function wiggle() {
+  const rows = document.getElementsByClassName("row");
   if (!rows.length) return;
 
-  const inputRow = rows[rows.length - 2];
-
-  if (!inputRow) return;
-
-  inputRow.classList.remove("wiggle");
-  void inputRow.offsetWidth;
-  inputRow.classList.add("wiggle");
-
-  setTimeout(() => {
-    inputRow.classList.remove("wiggle");
-  }, 300);
-}
-
-// --------------------
-// UNDO
-// --------------------
-function undo() {
-  if (gameWon || solutionShown) return;
-
-  if (path.length) path.pop();
-  renderLadder();
-}
-
-// --------------------
-// SHOW SOLUTION
-// --------------------
-function showSolution() {
-  if (!solutionPath || gameWon) return;
-
-  solutionShown = true;
-  path = solutionPath.slice(1, -1);
-  guess = "";
-
-  renderLadder();
+  const last = rows[rows.length - 1];
+  last.classList.remove("wiggle");
+  void last.offsetWidth;
+  last.classList.add("wiggle");
 }
 
 // --------------------
