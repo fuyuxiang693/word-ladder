@@ -2,7 +2,8 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Word Ladder</title>
+  <title>Word Ladder Daily</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,35 +12,56 @@
       text-align: center;
     }
 
-    input {
-      padding: 8px;
-      margin: 5px;
-      font-size: 16px;
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .puzzle-box {
+      margin: 20px 0;
+      padding: 15px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 18px;
+    }
+
+    .word {
+      font-size: 28px;
+      font-weight: bold;
+      margin: 10px 0;
     }
 
     button {
-      padding: 8px 12px;
+      padding: 10px 15px;
       font-size: 16px;
       cursor: pointer;
+      margin-top: 10px;
     }
 
     #output {
       margin-top: 20px;
-      font-size: 18px;
       white-space: pre-line;
+      font-size: 18px;
     }
   </style>
 </head>
 
 <body>
-  <h1>Word Ladder</h1>
 
-  <input id="start" placeholder="start word">
-  <input id="end" placeholder="end word">
-  <button onclick="run()">Solve</button>
+  <h1>Word Ladder Daily</h1>
+
+  <div class="puzzle-box">
+    <div>Start Word</div>
+    <div class="word" id="startWord">...</div>
+
+    <div>End Word</div>
+    <div class="word" id="endWord">...</div>
+  </div>
+
+  <button onclick="solve()">Show Solution</button>
 
   <div id="output"></div>
 
   <script src="script.js"></script>
+
 </body>
 </html>

@@ -1,10 +1,46 @@
 let WORDS = [];
+let PUZZLE = null;
 
 async function loadWords() {
   const res = await fetch("en_filtered.txt");
   const text = await res.text();
   WORDS = text.trim().split("\n");
 }
+
+// ----------------------
+// Wordle-style daily seed
+// ----------------------
+
+function getDayIndex() {
+  const start = new Date("2024-01-01");
+  const now = new Date();
+  return Math.floor((now - start) / (1000 * 60 * 60 * 24));
+}
+
+function seededRandom(seed) {
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+// ----------------------
+// Pick daily puzzle
+// ----------------------
+
+function getDailyPuzzle() {
+  const seed = getDayIndex();
+
+  const startIndex = Math.floor(seededRandom(seed) * WORDS.length);
+  const endIndex = Math.floor(seededRandom(seed + 1) * WORDS.length);
+
+  return {
+    start: WORDS[startIndex],
+    end: WORDS[endIndex]
+  };
+}
+
+// ----------------------
+// Word ladder logic
+// ----------------------
 
 function isOneMove(a, b) {
   if (a === b) return false;
@@ -49,14 +85,24 @@ function shortestPath(start, end) {
   return null;
 }
 
-async function run() {
-  if (WORDS.length === 0) await loadWords();
+// ----------------------
+// UI logic
+// ----------------------
 
-  const start = document.getElementById("start").value.trim().toLowerCase();
-  const end = document.getElementById("end").value.trim().toLowerCase();
+async function init() {
+  await loadWords();
 
-  const result = shortestPath(start, end);
+  PUZZLE = getDailyPuzzle();
+
+  document.getElementById("startWord").innerText = PUZZLE.start;
+  document.getElementById("endWord").innerText = PUZZLE.end;
+}
+
+async function solve() {
+  const result = shortestPath(PUZZLE.start, PUZZLE.end);
 
   document.getElementById("output").innerText =
     result ? result.join(" → ") : "No path found";
 }
+
+init();
