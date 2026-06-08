@@ -109,7 +109,7 @@ function isValidStartEnd(start, end) {
 // PUZZLE GENERATION
 // --------------------
 function getPuzzle() {
-  const seed = Math.floor(Date.now() + 1 / 86400000);
+  const seed = Math.floor(Date.now() / 86400000);
   const rng = random_number_generator(seed);
 
   const targetLen =
