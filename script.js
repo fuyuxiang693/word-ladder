@@ -76,7 +76,7 @@ function getNeighbors(word) {
 }
 
 // --------------------
-// BFS PATH
+// BFS
 // --------------------
 function findPath(start, end) {
   const queue = [[start]];
@@ -190,7 +190,7 @@ function makeInputRow() {
 }
 
 // --------------------
-// KEYBOARD
+// KEYBOARD (UPDATED)
 // --------------------
 function createKeyboard() {
   const layout = [
@@ -202,31 +202,74 @@ function createKeyboard() {
   const kb = document.getElementById("keyboard");
   kb.innerHTML = "";
 
-  for (const row of layout) {
-    const rowDiv = document.createElement("div");
-    rowDiv.className = "keyrow";
-
-    for (const ch of row) {
-      const key = document.createElement("div");
-      key.className = "key";
-      key.innerText = ch.toUpperCase();
-
-      key.onclick = () => {
-        if (!gameWon && !solutionShown) {
-          guess += ch;
-          renderLadder();
-        }
-      };
-
-      rowDiv.appendChild(key);
-    }
-
-    kb.appendChild(rowDiv);
+  function makeKey(label, onClick) {
+    const key = document.createElement("div");
+    key.className = "key";
+    key.innerText = label;
+    key.onclick = onClick;
+    return key;
   }
+
+  const row1 = document.createElement("div");
+  row1.className = "keyrow";
+
+  for (const ch of layout[0]) {
+    row1.appendChild(makeKey(ch.toUpperCase(), () => {
+      if (!gameWon && !solutionShown) {
+        guess += ch;
+        renderLadder();
+      }
+    }));
+  }
+
+  const row2 = document.createElement("div");
+  row2.className = "keyrow";
+
+  for (const ch of layout[1]) {
+    row2.appendChild(makeKey(ch.toUpperCase(), () => {
+      if (!gameWon && !solutionShown) {
+        guess += ch;
+        renderLadder();
+      }
+    }));
+  }
+
+  const row3 = document.createElement("div");
+  row3.className = "keyrow";
+
+  const enter = makeKey("ENTER", () => {
+    if (!gameWon && !solutionShown) submit();
+  });
+  enter.classList.add("special-key", "enter-key");
+
+  const back = makeKey("⌫", () => {
+    if (!gameWon && !solutionShown) {
+      guess = guess.slice(0, -1);
+      renderLadder();
+    }
+  });
+  back.classList.add("special-key", "back-key");
+
+  row3.appendChild(enter);
+
+  for (const ch of layout[2]) {
+    row3.appendChild(makeKey(ch.toUpperCase(), () => {
+      if (!gameWon && !solutionShown) {
+        guess += ch;
+        renderLadder();
+      }
+    }));
+  }
+
+  row3.appendChild(back);
+
+  kb.appendChild(row1);
+  kb.appendChild(row2);
+  kb.appendChild(row3);
 }
 
 // --------------------
-// KEY INPUT
+// INPUT
 // --------------------
 document.addEventListener("keydown", (e) => {
   if (!PUZZLE || gameWon || solutionShown) return;
@@ -239,7 +282,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 // --------------------
-// SUBMIT (FIXED)
+// SUBMIT
 // --------------------
 function submit() {
   if (gameWon || solutionShown) return;
@@ -249,11 +292,7 @@ function submit() {
 
   if (!isValidMove(last, word)) {
     renderLadder();
-
-    requestAnimationFrame(() => {
-      wiggleInputRow();
-    });
-
+    requestAnimationFrame(() => wiggleInputRow());
     return;
   }
 
@@ -261,12 +300,11 @@ function submit() {
   guess = "";
 
   checkWin(word);
-
   renderLadder();
 }
 
 // --------------------
-// WIN CHECK
+// WIN
 // --------------------
 function checkWin(word) {
   if (word === PUZZLE.end || isOneEditAway(word, PUZZLE.end)) {
@@ -276,7 +314,7 @@ function checkWin(word) {
 }
 
 // --------------------
-// WIGGLE INPUT ROW (FIXED)
+// WIGGLE
 // --------------------
 function wiggleInputRow() {
   const ladder = document.getElementById("ladder");
@@ -284,7 +322,6 @@ function wiggleInputRow() {
 
   if (!rows.length) return;
 
-  // input row is ALWAYS the second-to-last row
   const inputRow = rows[rows.length - 2];
 
   if (!inputRow) return;
@@ -315,7 +352,6 @@ function showSolution() {
   if (!solutionPath || gameWon) return;
 
   solutionShown = true;
-
   path = solutionPath.slice(1, -1);
   guess = "";
 

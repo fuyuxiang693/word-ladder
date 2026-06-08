@@ -125,10 +125,20 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   border-radius: 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .key:hover {
   background: #ddd;
+}
+
+/* Wordle-style wide keys */
+.key.wide {
+  min-width: 64px;
+  padding: 12px 14px;
 }
 
 /* -------------------- */
@@ -146,4 +156,24 @@ body {
 
 .wiggle {
   animation: wiggle 0.25s ease;
+}
+
+.special-key {
+  background: #111;
+  color: white;
+  border: 1px solid #111;
+}
+
+.special-key:hover {
+  background: #000;
+  border-color: #000;
+}
+
+.enter-key {
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.back-key {
+  font-size: 16px;
 }
