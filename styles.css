@@ -1,39 +1,60 @@
+
+/* -------------------- */
+/* GLOBAL */
+/* -------------------- */
+
 body {
   font-family: Arial, sans-serif;
+
   display: flex;
   justify-content: center;
-  margin-top: 30px;
+
+  margin: 0;
+  padding-top: 30px;
+
+  overflow-x: hidden;
 }
+
+/* -------------------- */
+/* APP WRAPPER */
+/* -------------------- */
 
 #app {
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  width: 100%;
+  max-width: 480px;
 }
 
 /* -------------------- */
-/* LADDER CONTAINER */
+/* LADDER (FIXED LEFT ALIGN INSIDE CENTERED BLOCK) */
 /* -------------------- */
 
 #ladder {
   display: flex;
   flex-direction: column;
+
   align-items: flex-start;
+
   gap: 8px;
   margin-top: 10px;
+
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* -------------------- */
-/* ROW (FIXED FOR WIGGLE) */
+/* ROW */
 /* -------------------- */
 
 .row {
   display: flex;
   gap: 6px;
 
-  /* 🔥 critical for reliable animation */
-  transform: translateX(0);
-  will-change: transform;
+  width: fit-content;
 }
 
 /* -------------------- */
@@ -54,6 +75,7 @@ body {
   font-weight: 700;
 
   text-transform: uppercase;
+
   background: white;
   box-sizing: border-box;
 }
@@ -76,12 +98,18 @@ body {
 
 #actions {
   margin-top: 14px;
+
   display: flex;
   gap: 24px;
+
   font-size: 13px;
-  letter-spacing: 1.2px;
   font-weight: 800;
+  letter-spacing: 1.2px;
+
   color: #444;
+
+  text-transform: uppercase;
+  font-family: Arial, sans-serif;
 }
 
 #actions span {
@@ -100,9 +128,12 @@ body {
 
 #keyboard {
   margin-top: 18px;
+
   display: flex;
   flex-direction: column;
   gap: 6px;
+
+  width: 100%;
 }
 
 .keyrow {
@@ -110,6 +141,10 @@ body {
   justify-content: center;
   gap: 6px;
 }
+
+/* -------------------- */
+/* KEYS */
+/* -------------------- */
 
 .key {
   padding: 12px 10px;
@@ -124,6 +159,7 @@ body {
   text-align: center;
   font-weight: 700;
   text-transform: uppercase;
+
   border-radius: 4px;
 
   display: flex;
@@ -135,14 +171,36 @@ body {
   background: #ddd;
 }
 
-/* Wordle-style wide keys */
-.key.wide {
-  min-width: 64px;
-  padding: 12px 14px;
+/* -------------------- */
+/* ENTER KEY FIX */
+/* -------------------- */
+
+.key.enter-key {
+  min-width: 72px;
+  font-size: 12px;
 }
 
 /* -------------------- */
-/* WIGGLE FIX (IMPORTANT PART) */
+/* SPECIAL KEYS */
+/* -------------------- */
+
+.special-key {
+  background: #111;
+  color: white;
+  border: 1px solid #111;
+}
+
+.special-key:hover {
+  background: #000;
+  border-color: #000;
+}
+
+.back-key {
+  font-size: 16px;
+}
+
+/* -------------------- */
+/* WIGGLE */
 /* -------------------- */
 
 @keyframes wiggle {
@@ -156,24 +214,4 @@ body {
 
 .wiggle {
   animation: wiggle 0.25s ease;
-}
-
-.special-key {
-  background: #111;
-  color: white;
-  border: 1px solid #111;
-}
-
-.special-key:hover {
-  background: #000;
-  border-color: #000;
-}
-
-.enter-key {
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.back-key {
-  font-size: 16px;
 }

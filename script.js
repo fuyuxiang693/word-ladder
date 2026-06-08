@@ -81,7 +81,7 @@ function getNeighbors(word) {
 }
 
 // --------------------
-// RNG mulberry32 (fixed seed for daily puzzle)
+// RNG
 // --------------------
 function random_number_generator(seed) {
   return function () {
@@ -92,10 +92,13 @@ function random_number_generator(seed) {
   };
 }
 
+// --------------------
+// VALID START/END RULE
+// --------------------
 function isValidStartEnd(start, end) {
   if (!start || !end) return false;
 
-  for (let i = 0; i < start.length; i++) {
+  for (let i = 0; i < Math.min(start.length, end.length); i++) {
     if (start[i] === end[i]) return false;
   }
 
@@ -103,7 +106,7 @@ function isValidStartEnd(start, end) {
 }
 
 // --------------------
-// PUZZLE GENERATION (FIXED)
+// PUZZLE GENERATION
 // --------------------
 function getPuzzle() {
   const seed = Math.floor(Date.now() / 86400000);
@@ -141,23 +144,17 @@ function getPuzzle() {
           newPath.length === targetLen &&
           isValidStartEnd(start, next)
         ) {
-          return {
-            start,
-            end: next
-          };
+          return { start, end: next };
         }
       }
     }
   }
 
-  return {
-    start: WORDS[0],
-    end: WORDS[1]
-  };
+  return { start: WORDS[0], end: WORDS[1] };
 }
 
 // --------------------
-// FIND PATH (RELIABLE SOLUTION PATH)
+// SOLUTION PATH
 // --------------------
 function findPath(start, end) {
   const queue = [[start]];
@@ -230,16 +227,16 @@ function makeInputRow() {
 }
 
 // --------------------
-// KEYBOARD (unchanged)
+// KEYBOARD
 // --------------------
 function createKeyboard() {
   const layout = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
   const kb = document.getElementById("keyboard");
   kb.innerHTML = "";
 
-  function key(label, fn) {
+  function key(label, fn, extraClass = "") {
     const k = document.createElement("div");
-    k.className = "key";
+    k.className = "key " + extraClass;
     k.innerText = label;
     k.onclick = fn;
     return k;
@@ -272,13 +269,14 @@ function createKeyboard() {
   const row3 = document.createElement("div");
   row3.className = "keyrow";
 
-  const enter = key("ENTER", submit);
+  const enter = key("ENTER", submit, "special-key enter-key");
+
   const back = key("⌫", () => {
     if (!gameWon && !solutionShown) {
       guess = guess.slice(0, -1);
       renderLadder();
     }
-  });
+  }, "special-key back-key");
 
   row3.appendChild(enter);
 
@@ -304,11 +302,22 @@ function createKeyboard() {
 document.addEventListener("keydown", (e) => {
   if (!PUZZLE || gameWon || solutionShown) return;
 
-  if (e.key === "Enter") submit();
-  else if (e.key === "Backspace") guess = guess.slice(0, -1);
-  else if (/^[a-z]$/i.test(e.key)) guess += e.key.toLowerCase();
+  if (e.key === "Enter") {
+    e.preventDefault();
+    submit();
+    return;
+  }
 
-  renderLadder();
+  if (e.key === "Backspace") {
+    guess = guess.slice(0, -1);
+    renderLadder();
+    return;
+  }
+
+  if (/^[a-z]$/i.test(e.key)) {
+    guess += e.key.toLowerCase();
+    renderLadder();
+  }
 });
 
 // --------------------
@@ -318,8 +327,16 @@ function submit() {
   const last = path.length ? path[path.length - 1] : PUZZLE.start;
   const word = guess.trim().toLowerCase();
 
-  if (!WORDSET.has(word) || !isOneEditAway(last, word)) {
-    wiggle();
+  const isValid = WORDSET.has(word) && isOneEditAway(last, word);
+
+  if (!isValid) {
+    renderLadder();
+
+    // 🔥 delay wiggle until DOM updates
+    requestAnimationFrame(() => {
+      wiggle();
+    });
+
     return;
   }
 
@@ -335,14 +352,27 @@ function submit() {
 }
 
 // --------------------
-// SHOW SOLUTION (FIXED)
+// UNDO (FIXED)
+// --------------------
+function undo() {
+  if (gameWon || solutionShown) return;
+
+  if (path.length === 0) return;
+
+  path.pop();
+  guess = "";
+
+  renderLadder();
+}
+
+// --------------------
+// SHOW SOLUTION
 // --------------------
 function showSolution() {
-  if (!solutionPath && !PUZZLE.directPath) return;
+  if (!solutionPath) return;
 
   solutionShown = true;
-
-  path = (solutionPath || PUZZLE.directPath).slice(1, -1);
+  path = solutionPath.slice(1, -1);
   guess = "";
 
   renderLadder();
@@ -352,13 +382,22 @@ function showSolution() {
 // WIGGLE
 // --------------------
 function wiggle() {
-  const rows = document.getElementsByClassName("row");
-  if (!rows.length) return;
+  const ladder = document.getElementById("ladder");
+  const rows = ladder.getElementsByClassName("row");
 
-  const last = rows[rows.length - 1];
-  last.classList.remove("wiggle");
-  void last.offsetWidth;
-  last.classList.add("wiggle");
+  if (rows.length < 2) return;
+
+  const inputRow = rows[rows.length - 2];
+
+  if (!inputRow) return;
+
+  inputRow.classList.remove("wiggle");
+  void inputRow.offsetWidth;
+  inputRow.classList.add("wiggle");
+
+  setTimeout(() => {
+    inputRow.classList.remove("wiggle");
+  }, 300);
 }
 
 // --------------------
