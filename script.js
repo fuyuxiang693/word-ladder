@@ -190,7 +190,11 @@ function renderLadder() {
     ladder.appendChild(makeRow(w));
   }
 
-  ladder.appendChild(makeInputRow());
+  // ❌ DO NOT show input row if game is over
+  if (!gameWon && !solutionShown) {
+    ladder.appendChild(makeInputRow());
+  }
+
   ladder.appendChild(makeRow(PUZZLE.end, true));
 }
 
